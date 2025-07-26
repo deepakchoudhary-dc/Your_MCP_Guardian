@@ -8,6 +8,25 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Enterprise Security Modules -->
+    <script src="./runtime_security_scanner.js"></script>
+    <script src="./network_security_scanner.js"></script>
+    <script src="./application_logic_scanner.js"></script>
+    <script src="./dast_scanner.js"></script>
+    <script src="./sca_scanner.js"></script>
+    <script src="./secret_scanner.js"></script>
+    <script src="./iac_scanner.js"></script>
+    <script src="./naptha_agent_coordinator.js"></script>
+    <script src="./ai_powered_analytics.js"></script>
+    <script src="./threat_intelligence_engine.js"></script>
+    <script src="./compliance_orchestrator.js"></script>
+    <script src="./autonomous_remediation.js"></script>
+    <script src="./siem_connector.js"></script>
+    <script src="./security_orchestration_engine.js"></script>
+    <script src="./cicd_integration.js"></script>
+    <script src="./comprehensive_security_scanner.js"></script>
+    <script src="./security_dashboard.js"></script>
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -267,8 +286,8 @@
                 this.initializeRealTimeDisplay();
                 
                 try {
-                    // Run all selected scan types
-                    await this.executeComprehensiveScan(config);
+                    // Use the new Comprehensive Security Scanner with Naptha AI integration
+                    await this.executeComprehensiveScanWithNaptha(config);
                     
                     // Generate final report
                     this.generateEnterpriseReport();
@@ -280,6 +299,138 @@
                     this.scanInProgress = false;
                     this.hideProgressBar();
                 }
+            }
+
+            async executeComprehensiveScanWithNaptha(config) {
+                this.addRealTimeUpdate('🤖 Initializing Naptha AI Enterprise Security Scanner...');
+                await this.delay(1000);
+                
+                // Initialize the comprehensive scanner with Naptha AI integration
+                let comprehensiveScanner;
+                if (typeof ComprehensiveSecurityScanner !== 'undefined') {
+                    comprehensiveScanner = new ComprehensiveSecurityScanner({
+                        napthaIntegration: true,
+                        aiAnalytics: true,
+                        autonomousRemediation: false,
+                        threatIntelligence: true,
+                        complianceFrameworks: ['SOC2', 'ISO27001', 'NIST', 'PCI-DSS']
+                    });
+                    
+                    this.addRealTimeUpdate('✅ Naptha AI modules initialized successfully');
+                } else {
+                    this.addRealTimeUpdate('⚠️ Falling back to individual scanners...');
+                    // Fallback to existing individual scan logic
+                    await this.executeComprehensiveScan(config);
+                    return;
+                }
+                
+                await this.delay(1000);
+                
+                try {
+                    // Configure server details for scanning
+                    const serverConfig = {
+                        serverName: config.serverName,
+                        serverUrl: config.serverUrl,
+                        tools: config.tools,
+                        oauthScopes: config.oauthScopes,
+                        endpoint: config.serverUrl
+                    };
+                    
+                    this.addRealTimeUpdate('🔄 Starting comprehensive AI-powered security analysis...');
+                    this.updateScanStatus('🤖 AI Analysis in Progress...', 20);
+                    
+                    // Run the comprehensive scan with all Naptha AI features
+                    const scanResults = await comprehensiveScanner.performCompleteScan(serverConfig);
+                    
+                    this.addRealTimeUpdate('✅ Comprehensive scan completed successfully');
+                    this.updateScanStatus('📊 Processing scan results...', 80);
+                    
+                    // Process and display results in real-time
+                    await this.processComprehensiveScanResults(scanResults);
+                    
+                    this.addRealTimeUpdate('🎯 Enterprise security analysis complete');
+                    this.updateScanStatus('📊 Generating enterprise report...', 100);
+                    
+                } catch (error) {
+                    console.error('❌ Comprehensive scan failed:', error);
+                    this.addRealTimeUpdate(`❌ Scan error: ${error.message}`);
+                    
+                    // Fallback to individual scanners if comprehensive scan fails
+                    this.addRealTimeUpdate('🔄 Falling back to individual security scanners...');
+                    await this.executeComprehensiveScan(config);
+                }
+            }
+
+            async processComprehensiveScanResults(scanResults) {
+                this.addRealTimeUpdate('📊 Processing AI-enhanced scan results...');
+                
+                // Process vulnerabilities from all scan types
+                const scanTypes = ['static', 'runtime', 'network', 'dast', 'sca', 'secret', 'iac', 'applicationLogic'];
+                
+                for (const scanType of scanTypes) {
+                    if (scanResults.scanResults && scanResults.scanResults[scanType]) {
+                        const results = scanResults.scanResults[scanType];
+                        this.scanResults[scanType] = results;
+                        
+                        this.addRealTimeUpdate(`🔍 Processing ${scanType.toUpperCase()} results...`);
+                        
+                        if (results.vulnerabilities) {
+                            for (const vuln of results.vulnerabilities) {
+                                vuln.scanType = scanType;
+                                vuln.timestamp = new Date().toISOString();
+                                vuln.aiEnhanced = true; // Mark as AI-enhanced
+                                this.vulnerabilities.push(vuln);
+                                this.addRealTimeVulnerability(vuln);
+                                await this.delay(300); // Faster display for better UX
+                            }
+                        }
+                        
+                        this.addRealTimeUpdate(`✅ ${scanType.toUpperCase()}: ${results.vulnerabilities?.length || 0} issues processed`);
+                        await this.delay(500);
+                    }
+                }
+                
+                // Process Naptha AI findings
+                if (scanResults.scanResults?.naptha?.findings) {
+                    this.addRealTimeUpdate('🤖 Processing Naptha AI autonomous findings...');
+                    
+                    for (const finding of scanResults.scanResults.naptha.findings) {
+                        finding.scanType = 'NAPTHA';
+                        finding.timestamp = new Date().toISOString();
+                        finding.aiGenerated = true;
+                        this.vulnerabilities.push(finding);
+                        this.addRealTimeVulnerability(finding);
+                        await this.delay(400);
+                    }
+                    
+                    this.addRealTimeUpdate(`🤖 Naptha AI: ${scanResults.scanResults.naptha.findings.length} autonomous findings processed`);
+                }
+                
+                // Process AI Analytics insights
+                if (scanResults.scanResults?.analytics) {
+                    this.addRealTimeUpdate('🧠 Processing AI-powered analytics insights...');
+                    this.scanResults.analytics = scanResults.scanResults.analytics;
+                }
+                
+                // Process Compliance results
+                if (scanResults.scanResults?.compliance) {
+                    this.addRealTimeUpdate('📋 Processing compliance assessment results...');
+                    this.scanResults.compliance = scanResults.scanResults.compliance;
+                }
+                
+                // Process Threat Intelligence
+                if (scanResults.scanResults?.threatIntel) {
+                    this.addRealTimeUpdate('🕵️ Processing threat intelligence correlations...');
+                    this.scanResults.threatIntel = scanResults.scanResults.threatIntel;
+                }
+                
+                // Process Remediation Plans
+                if (scanResults.scanResults?.remediation) {
+                    this.addRealTimeUpdate('🔧 Processing autonomous remediation recommendations...');
+                    this.scanResults.remediation = scanResults.scanResults.remediation;
+                }
+                
+                this.addRealTimeUpdate('✨ All AI-enhanced results processed successfully');
             }
 
             getScanConfiguration() {

@@ -121,7 +121,7 @@ class RuntimeSecurityScanner {
 
                 // Check for data corruption indicators
                 const corruptionSigns = successfulResults.some(result => 
-                    result.value && (
+                    result.value && typeof result.value === 'string' && (
                         result.value.includes('undefined') ||
                         result.value.includes('null') ||
                         result.value.includes('NaN') ||

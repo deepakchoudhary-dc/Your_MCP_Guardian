@@ -78,7 +78,8 @@ class DASTScanner {
             clearTimeout(timeoutId);
             return response.status < 500; // Accept any response except server errors
         } catch (error) {
-            return false;
+            console.warn(`⚠️ Server not reachable at ${this.baseUrl}, continuing with simulated tests...`);
+            return false; // Return false but don't throw error
         }
     }
 
