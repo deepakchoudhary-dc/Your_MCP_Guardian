@@ -3,4 +3,4 @@ compatibility_date = "2025-08-13"
 
 [assets]
 directory = "."
-exclude = ["node_modules", ".git", "*.md", "wrangler.toml", "live_server.js", "server.js", "start.js"]
+exclude = [".git", ".qodo", "node_modules", "DEPLOY.md", "README.md", "wrangler.toml", "live_server.js", "server.js", "start.js"]
