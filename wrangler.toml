@@ -1,6 +1,12 @@
 name = "mcp-guardian-enterprise"
 compatibility_date = "2025-08-13"
 
+# Deploy as static assets only (no Worker script)
 [assets]
 directory = "."
-exclude = [".git", ".qodo", "node_modules", "DEPLOY.md", "README.md", "wrangler.toml", "live_server.js", "server.js", "start.js"]
+include = ["*.html", "*.js", "*.css", "*.ico", "*.json", "*.png", "*.jpg", "*.svg"]
+exclude = [".git/**", ".qodo/**", "node_modules/**", "*.md", "wrangler.toml", "live_server.js", "server.js", "start.js"]
+
+# Explicitly specify this is a static site, not a Worker
+[build]
+command = ""
