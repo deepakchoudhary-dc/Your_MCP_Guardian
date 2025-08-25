@@ -324,42 +324,15 @@ class IaCScanner {
     }
 
     async discoverIaCFiles() {
-        // Simulate file discovery
-        const mockFiles = {
-            terraform: [
-                'main.tf',
-                'variables.tf',
-                'outputs.tf',
-                'terraform.tfvars',
-                'modules/vpc/main.tf',
-                'modules/security/security_groups.tf'
-            ],
-            cloudformation: [
-                'template.yaml',
-                'infrastructure.yml',
-                'cloudformation.json'
-            ],
-            kubernetes: [
-                'deployment.yaml',
-                'service.yaml',
-                'ingress.yml',
-                'configmap.yaml',
-                'secret.yaml',
-                'k8s/namespace.yaml'
-            ],
-            docker: [
-                'Dockerfile',
-                'Dockerfile.prod',
-                'docker/Dockerfile.api'
-            ],
-            ansible: [
-                'playbook.yml',
-                'site.yaml',
-                'roles/common/tasks/main.yml'
-            ]
+        // In a real implementation, would scan actual filesystem for IaC files
+        // Return empty arrays to prevent mock vulnerabilities
+        return {
+            terraform: [],
+            cloudformation: [],
+            kubernetes: [],
+            docker: [],
+            ansible: []
         };
-        
-        return mockFiles;
     }
 
     async scanIaCType(iacType, files) {

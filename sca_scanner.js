@@ -592,27 +592,13 @@ class SCAScanner {
     async checkOutdatedDependencies() {
         console.log('Checking for outdated dependencies...');
         
-        // Simulate checking for outdated packages
+        // Check for outdated packages (real implementation would call registry APIs)
         for (const [ecosystem, deps] of Object.entries(this.dependencies)) {
             if (!deps || typeof deps !== 'object') continue;
             
             for (const [packageName, version] of Object.entries(deps)) {
-                // Simulate version checking (in real implementation, would call registry APIs)
-                const isOutdated = Math.random() > 0.7; // 30% chance of being outdated
-                
-                if (isOutdated) {
-                    const latestVersion = this.generateNewerVersion(version);
-                    this.addVulnerability({
-                        type: 'Outdated Dependency',
-                        severity: 'Low',
-                        package: packageName,
-                        version: version,
-                        ecosystem: ecosystem,
-                        description: `${packageName}@${version} is outdated`,
-                        evidence: `Current: ${version}, Latest: ${latestVersion}`,
-                        recommendation: `Update ${packageName} to version ${latestVersion}`
-                    });
-                }
+                // In a real implementation, would call registry APIs to check for updates
+                // For now, skip random generation and only report genuine findings
             }
         }
     }
@@ -628,27 +614,13 @@ class SCAScanner {
             'BUSL-1.1'
         ];
         
-        // Simulate license checking
+        // Check license compliance (real implementation would parse actual license files)
         for (const [ecosystem, deps] of Object.entries(this.dependencies)) {
             if (!deps || typeof deps !== 'object') continue;
             
             for (const [packageName, version] of Object.entries(deps)) {
-                // Simulate license detection
-                const hasProblematicLicense = Math.random() > 0.9; // 10% chance
-                
-                if (hasProblematicLicense) {
-                    const license = problematicLicenses[Math.floor(Math.random() * problematicLicenses.length)];
-                    this.addVulnerability({
-                        type: 'License Compliance Issue',
-                        severity: 'Medium',
-                        package: packageName,
-                        version: version,
-                        ecosystem: ecosystem,
-                        description: `${packageName}@${version} uses restrictive license: ${license}`,
-                        evidence: `License: ${license}`,
-                        recommendation: 'Review license compatibility with your project requirements'
-                    });
-                }
+                // In a real implementation, would check actual license information
+                // For now, skip random generation and only report genuine findings
             }
         }
     }
@@ -805,36 +777,15 @@ class SCAScanner {
 
     // Helper methods
     async readFile(filename) {
-        // Simulate file reading (in real implementation, would use fs.readFile)
-        const mockFiles = {
-            'package.json': JSON.stringify({
-                dependencies: {
-                    'lodash': '4.17.20',
-                    'express': '4.16.0',
-                    'axios': '0.21.0',
-                    'moment': '2.29.1'
-                },
-                devDependencies: {
-                    'minimist': '1.2.5',
-                    'serialize-javascript': '3.1.0'
-                }
-            }),
-            'requirements.txt': 'django==3.1.0\nflask==1.0.0\nrequests==2.25.0',
-            'composer.json': JSON.stringify({
-                require: {
-                    'symfony/symfony': '5.2.0',
-                    'laravel/framework': '8.0.0'
-                }
-            })
-        };
-        
-        return mockFiles[filename] || null;
+        // In a real implementation, would read actual files from filesystem
+        // Return null to prevent mock dependencies
+        return null;
     }
 
     async fileExists(filename) {
-        // Simulate file existence check
-        const existingFiles = ['package.json', 'requirements.txt', 'composer.json'];
-        return existingFiles.includes(filename);
+        // In a real implementation, would check actual filesystem
+        // Return false to prevent mock files
+        return false;
     }
 
     extractDependenciesFromLock(dependencies, result) {

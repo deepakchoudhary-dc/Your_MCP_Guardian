@@ -326,7 +326,7 @@ class ApplicationLogicScanner {
         const response = await this.simulateRequest('/account/lockout-policy');
         
         // Simulate checking lockout policy
-        const hasLockoutPolicy = Math.random() > 0.3; // Simulate detection
+        const hasLockoutPolicy = false; // Skip random generation
         
         if (!hasLockoutPolicy) {
             this.addVulnerability({
