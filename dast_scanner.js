@@ -8,8 +8,20 @@ class DASTScanner {
         this.serverConfig = serverConfig;
         this.vulnerabilities = [];
         this.testResults = {};
-        this.baseUrl = serverConfig.serverUrl || 'http://localhost:3000';
+        this.baseUrl = this.normalizeUrl(serverConfig.serverUrl || 'http://localhost:3000');
         this.timeout = 30000; // 30 seconds
+    }
+
+    /**
+     * Normalize URL to handle HTTP/HTTPS issues
+     */
+    normalizeUrl(url) {
+        // If localhost and HTTPS, try HTTP instead for local testing
+        if (url.includes('localhost') && url.startsWith('https://')) {
+            console.log(`🔄 Converting localhost HTTPS to HTTP for testing: ${url}`);
+            return url.replace('https://', 'http://');
+        }
+        return url;
     }
 
     async performDASTScan() {
@@ -66,17 +78,53 @@ class DASTScanner {
 
     async checkServerReachability() {
         try {
+            console.log(`🔍 Testing server reachability: ${this.baseUrl}`);
+            
             const controller = new AbortController();
             const timeoutId = setTimeout(() => controller.abort(), 5000);
             
-            const response = await fetch(`${this.baseUrl}/health`, {
-                method: 'GET',
-                signal: controller.signal,
-                headers: { 'User-Agent': 'MCP-Security-Scanner/2.0' }
-            });
+            // Try the configured URL first
+            let response;
+            try {
+                response = await fetch(`${this.baseUrl}/health`, {
+                    method: 'GET',
+                    signal: controller.signal,
+                    headers: { 'User-Agent': 'MCP-Security-Scanner/2.0' }
+                });
+                clearTimeout(timeoutId);
+                console.log(`✅ Server reachable at ${this.baseUrl}`);
+                return response.status < 500;
+            } catch (fetchError) {
+                clearTimeout(timeoutId);
+                
+                // If HTTPS failed on localhost, try HTTP
+                if (this.baseUrl.includes('localhost') && this.baseUrl.startsWith('https://')) {
+                    const httpUrl = this.baseUrl.replace('https://', 'http://');
+                    console.log(`🔄 HTTPS failed, trying HTTP: ${httpUrl}`);
+                    
+                    try {
+                        const controller2 = new AbortController();
+                        const timeoutId2 = setTimeout(() => controller2.abort(), 5000);
+                        
+                        response = await fetch(`${httpUrl}/health`, {
+                            method: 'GET',
+                            signal: controller2.signal,
+                            headers: { 'User-Agent': 'MCP-Security-Scanner/2.0' }
+                        });
+                        
+                        clearTimeout(timeoutId2);
+                        this.baseUrl = httpUrl; // Update to working URL
+                        console.log(`✅ Server reachable at ${httpUrl}`);
+                        return response.status < 500;
+                    } catch (httpError) {
+                        console.warn(`⚠️ Server not reachable at either HTTPS or HTTP, continuing with simulated tests...`);
+                        return false;
+                    }
+                }
+                
+                throw fetchError;
+            }
             
-            clearTimeout(timeoutId);
-            return response.status < 500; // Accept any response except server errors
         } catch (error) {
             console.warn(`⚠️ Server not reachable at ${this.baseUrl}, continuing with simulated tests...`);
             return false; // Return false but don't throw error

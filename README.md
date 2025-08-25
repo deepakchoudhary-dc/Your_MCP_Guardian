@@ -76,8 +76,7 @@ MCP Guardian Enterprise (Naptha AI-Powered)
 │   ├── dast_scanner.js                       # Dynamic Application Security Testing
 │   ├── sca_scanner.js                        # Software Composition Analysis
 │   ├── secret_scanner.js                     # Secret and credential detection
-│   ├── iac_scanner.js                        # Infrastructure as Code scanning
-│   └── live_dynamic_scanner.js               # Continuous live testing
+│   └── iac_scanner.js                        # Infrastructure as Code scanning
 ├── 📊 Intelligence & Reporting
 │   ├── security_dashboard.js                 # Unified enterprise dashboard
 │   ├── comprehensive_security_scanner.js     # Integrated scanner coordinator

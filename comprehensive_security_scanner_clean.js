@@ -197,7 +197,7 @@ class ComprehensiveSecurityScanner {
                 try {
                     console.log('⚡ Running DAST Scan...');
                     const dastScanner = new DASTScanner(this.serverConfig);
-                    scanResults.dast = await dastScanner.performDASTScan();
+                    scanResults.dast = await dastScanner.scanAll();
                 } catch (error) {
                     console.error('❌ DAST scan failed:', error);
                     scanResults.dast = this.createFallbackScanResult('dast', error);
@@ -211,7 +211,7 @@ class ComprehensiveSecurityScanner {
                 try {
                     console.log('⚡ Running SCA Scan...');
                     const scaScanner = new SCAScanner(this.serverConfig);
-                    scanResults.sca = await scaScanner.performSCAScan();
+                    scanResults.sca = await scaScanner.scanAll();
                 } catch (error) {
                     console.error('❌ SCA scan failed:', error);
                     scanResults.sca = this.createFallbackScanResult('sca', error);
@@ -225,7 +225,7 @@ class ComprehensiveSecurityScanner {
                 try {
                     console.log('⚡ Running Secret Scan...');
                     const secretScanner = new SecretScanner(this.serverConfig);
-                    scanResults.secret = await secretScanner.performSecretScan();
+                    scanResults.secret = await secretScanner.scanAll();
                 } catch (error) {
                     console.error('❌ Secret scan failed:', error);
                     scanResults.secret = this.createFallbackScanResult('secret', error);
@@ -239,7 +239,7 @@ class ComprehensiveSecurityScanner {
                 try {
                     console.log('⚡ Running IaC Scan...');
                     const iacScanner = new IaCScanner(this.serverConfig);
-                    scanResults.iac = await iacScanner.performIaCScan();
+                    scanResults.iac = await iacScanner.scanAll();
                 } catch (error) {
                     console.error('❌ IaC scan failed:', error);
                     scanResults.iac = this.createFallbackScanResult('iac', error);

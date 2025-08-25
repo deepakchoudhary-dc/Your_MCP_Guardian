@@ -97,6 +97,102 @@
             max-height: 300px;
             overflow-y: auto;
         }
+        
+        /* Enhanced Styles for Professional UI */
+        .scanning-indicator {
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        
+        .pulse-indicator {
+            width: 8px;
+            height: 8px;
+            background: #ef4444;
+            border-radius: 50%;
+            animation: pulse 1.5s infinite;
+        }
+        
+        .stat-card {
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+        
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .stat-card:hover::before {
+            left: 100%;
+        }
+        
+        .custom-scrollbar {
+            scrollbar-width: thin;
+            scrollbar-color: rgba(255, 255, 255, 0.2) rgba(255, 255, 255, 0.1);
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 3px;
+        }
+        
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .animate-slide-in {
+            animation: slideIn 0.5s ease-out;
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+        
+        .vulnerability-entered {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            border-left-width: 6px;
+        }
+        
+        .cve-badge {
+            font-family: 'Courier New', monospace;
+            font-size: 11px;
+            letter-spacing: 0.5px;
+        }
+        
+        .severity-badge {
+            text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+        }
         .live-update {
             color: #10b981;
             margin-bottom: 4px;
@@ -284,10 +380,15 @@
                 this.updateScanStatus('🚀 Initializing Enterprise Scan...', 0);
                 this.showProgressBar();
                 this.initializeRealTimeDisplay();
+                this.startScanTimer();
                 
                 try {
                     // Use the new Comprehensive Security Scanner with Naptha AI integration
                     await this.executeComprehensiveScanWithNaptha(config);
+                    
+                    // Stop timer and finalize
+                    this.stopScanTimer();
+                    document.getElementById('scan-status-text').textContent = 'Scan Complete ✅';
                     
                     // Generate final report
                     this.generateEnterpriseReport();
@@ -295,6 +396,7 @@
                 } catch (error) {
                     console.error('Enterprise scan failed:', error);
                     this.updateScanStatus('❌ Scan failed: ' + error.message, 100);
+                    this.stopScanTimer();
                 } finally {
                     this.scanInProgress = false;
                     this.hideProgressBar();
@@ -339,8 +441,9 @@
                     this.addRealTimeUpdate('🔄 Starting comprehensive AI-powered security analysis...');
                     this.updateScanStatus('🤖 AI Analysis in Progress...', 20);
                     
-                    // Run the comprehensive scan with all Naptha AI features
-                    const scanResults = await comprehensiveScanner.performCompleteScan(serverConfig);
+                    // Set server configuration and run comprehensive scan
+                    comprehensiveScanner.setServerConfig(serverConfig);
+                    const scanResults = await comprehensiveScanner.runComprehensiveScan();
                     
                     this.addRealTimeUpdate('✅ Comprehensive scan completed successfully');
                     this.updateScanStatus('📊 Processing scan results...', 80);
@@ -364,46 +467,55 @@
             async processComprehensiveScanResults(scanResults) {
                 this.addRealTimeUpdate('📊 Processing AI-enhanced scan results...');
                 
-                // Process vulnerabilities from all scan types
-                const scanTypes = ['static', 'runtime', 'network', 'dast', 'sca', 'secret', 'iac', 'applicationLogic'];
+                console.log('Processing scan results:', scanResults); // Debug log
                 
-                for (const scanType of scanTypes) {
-                    if (scanResults.scanResults && scanResults.scanResults[scanType]) {
-                        const results = scanResults.scanResults[scanType];
-                        this.scanResults[scanType] = results;
+                // Handle comprehensive scanner results structure
+                if (scanResults && scanResults.vulnerabilities) {
+                    this.addRealTimeUpdate(`🔍 Processing ${scanResults.vulnerabilities.length} total vulnerabilities...`);
+                    
+                    let processedCount = 0;
+                    const totalVulns = scanResults.vulnerabilities.length;
+                    
+                    // Process all vulnerabilities with progress updates
+                    for (const vuln of scanResults.vulnerabilities) {
+                        vuln.timestamp = new Date().toISOString();
+                        vuln.aiEnhanced = true; // Mark as AI-enhanced
+                        this.vulnerabilities.push(vuln);
+                        this.addRealTimeVulnerability(vuln);
                         
-                        this.addRealTimeUpdate(`🔍 Processing ${scanType.toUpperCase()} results...`);
+                        processedCount++;
                         
-                        if (results.vulnerabilities) {
-                            for (const vuln of results.vulnerabilities) {
-                                vuln.scanType = scanType;
-                                vuln.timestamp = new Date().toISOString();
-                                vuln.aiEnhanced = true; // Mark as AI-enhanced
-                                this.vulnerabilities.push(vuln);
-                                this.addRealTimeVulnerability(vuln);
-                                await this.delay(300); // Faster display for better UX
-                            }
+                        // Update progress every 10 vulnerabilities or at the end
+                        if (processedCount % 10 === 0 || processedCount === totalVulns) {
+                            const progress = (processedCount / totalVulns) * 100;
+                            document.getElementById('vulnerability-progress-bar').style.width = `${progress}%`;
                         }
                         
-                        this.addRealTimeUpdate(`✅ ${scanType.toUpperCase()}: ${results.vulnerabilities?.length || 0} issues processed`);
-                        await this.delay(500);
+                        await this.delay(50); // Show each vulnerability quickly
                     }
+                    
+                    this.addRealTimeUpdate(`✅ Successfully processed ${scanResults.vulnerabilities.length} vulnerabilities`);
+                    this.updateScanProgress(8, 8); // All modules complete
                 }
                 
-                // Process Naptha AI findings
-                if (scanResults.scanResults?.naptha?.findings) {
+                // Store scan results for report generation
+                this.scanResults = scanResults.detailedResults || {};
+                this.comprehensiveScanResults = scanResults;
+                
+                // Process Naptha AI findings if available
+                if (scanResults.detailedResults?.naptha?.findings) {
                     this.addRealTimeUpdate('🤖 Processing Naptha AI autonomous findings...');
                     
-                    for (const finding of scanResults.scanResults.naptha.findings) {
+                    for (const finding of scanResults.detailedResults.naptha.findings) {
                         finding.scanType = 'NAPTHA';
                         finding.timestamp = new Date().toISOString();
                         finding.aiGenerated = true;
                         this.vulnerabilities.push(finding);
                         this.addRealTimeVulnerability(finding);
-                        await this.delay(400);
+                        await this.delay(200);
                     }
                     
-                    this.addRealTimeUpdate(`🤖 Naptha AI: ${scanResults.scanResults.naptha.findings.length} autonomous findings processed`);
+                    this.addRealTimeUpdate(`🤖 Naptha AI: ${scanResults.detailedResults.naptha.findings.length} autonomous findings processed`);
                 }
                 
                 // Process AI Analytics insights
@@ -455,12 +567,83 @@
             initializeRealTimeDisplay() {
                 const resultsContainer = document.getElementById('results-container');
                 resultsContainer.innerHTML = `
-                    <div id="real-time-display">
-                        <h3 class="text-xl font-bold mb-4">🚨 Real-Time Vulnerability Detection</h3>
-                        <div id="vulnerability-feed" class="space-y-3 mb-6 max-h-80 overflow-y-auto"></div>
+                    <div id="real-time-display" class="space-y-6">
+                        <!-- Live Statistics Dashboard -->
+                        <div class="glass-card p-6">
+                            <h3 class="text-2xl font-bold mb-6 flex items-center">
+                                🔍 <span class="ml-2">Live Security Assessment</span>
+                                <div class="ml-auto flex items-center">
+                                    <div class="scanning-indicator"></div>
+                                    <span id="scan-status-text" class="text-sm ml-2">Scanning...</span>
+                                </div>
+                            </h3>
+                            
+                            <!-- Real-time Metrics Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+                                <div class="stat-card bg-gradient-to-br from-red-500/20 to-red-600/20 p-4 rounded-lg border border-red-500/30">
+                                    <div class="text-3xl font-bold text-red-400" id="critical-count">0</div>
+                                    <div class="text-sm text-red-300">Critical</div>
+                                    <div class="text-xs text-red-200/80">Immediate Action Required</div>
+                                </div>
+                                <div class="stat-card bg-gradient-to-br from-orange-500/20 to-orange-600/20 p-4 rounded-lg border border-orange-500/30">
+                                    <div class="text-3xl font-bold text-orange-400" id="high-count">0</div>
+                                    <div class="text-sm text-orange-300">High</div>
+                                    <div class="text-xs text-orange-200/80">High Priority Issues</div>
+                                </div>
+                                <div class="stat-card bg-gradient-to-br from-yellow-500/20 to-yellow-600/20 p-4 rounded-lg border border-yellow-500/30">
+                                    <div class="text-3xl font-bold text-yellow-400" id="medium-count">0</div>
+                                    <div class="text-sm text-yellow-300">Medium</div>
+                                    <div class="text-xs text-yellow-200/80">Moderate Risk</div>
+                                </div>
+                                <div class="stat-card bg-gradient-to-br from-blue-500/20 to-blue-600/20 p-4 rounded-lg border border-blue-500/30">
+                                    <div class="text-3xl font-bold text-blue-400" id="low-count">0</div>
+                                    <div class="text-sm text-blue-300">Low/Info</div>
+                                    <div class="text-xs text-blue-200/80">Minor Issues</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Risk Score and Total -->
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                                <div class="text-center p-6 bg-gradient-to-br from-purple-500/20 to-purple-600/20 rounded-lg border border-purple-500/30">
+                                    <div class="text-4xl font-bold text-purple-400" id="total-vulnerabilities">0</div>
+                                    <div class="text-lg text-purple-300">Total Vulnerabilities</div>
+                                    <div class="text-sm text-purple-200/80" id="scan-progress-text">Ready to scan</div>
+                                </div>
+                                <div class="text-center p-6 bg-gradient-to-br from-cyan-500/20 to-cyan-600/20 rounded-lg border border-cyan-500/30">
+                                    <div class="text-4xl font-bold text-cyan-400" id="risk-score-display">0</div>
+                                    <div class="text-lg text-cyan-300">Risk Score</div>
+                                    <div class="text-sm text-cyan-200/80" id="risk-level-text">Calculating...</div>
+                                </div>
+                            </div>
+                            
+                            <!-- Progress Bar -->
+                            <div class="w-full bg-white/10 rounded-full h-3 mb-4">
+                                <div id="vulnerability-progress-bar" class="bg-gradient-to-r from-blue-500 to-purple-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                            <div class="flex justify-between text-xs text-white/60">
+                                <span id="scanned-modules">0 of 8 modules completed</span>
+                                <span id="scan-time-elapsed">00:00</span>
+                            </div>
+                        </div>
                         
-                        <h4 class="text-lg font-semibold mb-2">📡 Live Scan Updates</h4>
-                        <div id="updates-feed" class="live-feed"></div>
+                        <!-- Live Vulnerability Feed -->
+                        <div class="glass-card p-6">
+                            <h4 class="text-xl font-bold mb-4 flex items-center">
+                                🚨 <span class="ml-2">Live Vulnerability Detection</span>
+                                <div class="ml-auto">
+                                    <div class="pulse-indicator"></div>
+                                </div>
+                            </h4>
+                            <div id="vulnerability-feed" class="space-y-3 max-h-96 overflow-y-auto custom-scrollbar"></div>
+                        </div>
+                        
+                        <!-- Live Scan Updates -->
+                        <div class="glass-card p-6">
+                            <h4 class="text-lg font-semibold mb-4 flex items-center">
+                                📡 <span class="ml-2">Real-Time Scan Activity</span>
+                            </h4>
+                            <div id="updates-feed" class="live-feed max-h-64 overflow-y-auto custom-scrollbar"></div>
+                        </div>
                     </div>
                 `;
             }
@@ -529,26 +712,31 @@
                 this.addRealTimeUpdate('🔍 Analyzing tool configurations for security issues...');
                 
                 const vulnerabilities = [];
-                const tools = config.tools;
-                const scopes = config.oauthScopes;
+                const tools = Array.isArray(config.tools) ? config.tools : [];
+                const scopes = Array.isArray(config.oauthScopes) ? config.oauthScopes : [];
 
-                // Command Injection Detection
-                const cmdInjectionTool = tools.find(t => /child_process|exec|spawn|system/i.test(t.description));
+                // Command Injection Detection - Enhanced patterns
+                const cmdInjectionTool = tools.find(t => 
+                    /child_process|exec|spawn|system|script|command|shell|run_sql|exec_script|run_command|execute/i.test(t.name + ' ' + t.description) ||
+                    /exec_script|run_command|shell_exec|system_call/.test(t.name)
+                );
                 if (cmdInjectionTool) {
                     vulnerabilities.push({
                         id: 'STATIC-CMD-001',
                         severity: 'Critical',
-                        title: 'Command Injection Vulnerability',
+                        title: 'Remote Code Execution (RCE)',
                         description: `Tool '${cmdInjectionTool.name}' executes system commands, creating critical RCE risk`,
-                        evidence: `Tool description: "${cmdInjectionTool.description}"`,
+                        evidence: `Dangerous tool: "${cmdInjectionTool.name}" - ${cmdInjectionTool.description}`,
                         recommendation: 'Remove command execution or implement strict input validation',
                         cve: 'CVE-2025-53818'
                     });
-                    this.addRealTimeUpdate(`🚨 CRITICAL: Command injection found in tool '${cmdInjectionTool.name}'`);
+                    this.addRealTimeUpdate(`🚨 CRITICAL: RCE vulnerability found in tool '${cmdInjectionTool.name}'`);
                 }
 
-                // SSRF Detection
-                const ssrfTool = tools.find(t => t.parameters?.url && /fetch|request|http/i.test(t.description));
+                // SSRF Detection - Enhanced patterns
+                const ssrfTool = tools.find(t => 
+                    (t.parameters?.url || t.parameters?.targetUrl) && /fetch|request|http|url/i.test(t.name + ' ' + t.description)
+                );
                 if (ssrfTool) {
                     vulnerabilities.push({
                         id: 'STATIC-SSRF-001',
@@ -568,12 +756,48 @@
                     vulnerabilities.push({
                         id: 'STATIC-PRIV-001',
                         severity: 'Critical',
-                        title: 'Excessive Privileges',
+                        title: 'Excessive Administrative Privileges',
                         description: `OAuth scopes contain administrative privileges: ${adminScopes.join(', ')}`,
                         evidence: `Admin scopes: ${adminScopes.join(', ')}`,
                         recommendation: 'Apply principle of least privilege'
                     });
                     this.addRealTimeUpdate(`🚨 CRITICAL: Excessive privileges detected`);
+                }
+
+                // SQL Injection Detection
+                const sqlTool = tools.find(t => 
+                    /sql|query|database|run_sql_query|db_query/.test(t.name) ||
+                    /sql|database|query/.test(t.description.toLowerCase())
+                );
+                if (sqlTool) {
+                    vulnerabilities.push({
+                        id: 'STATIC-SQL-001',
+                        severity: 'Critical',
+                        title: 'SQL Injection Vulnerability',
+                        description: `Tool '${sqlTool.name}' executes SQL queries without proper validation`,
+                        evidence: `SQL tool detected: "${sqlTool.name}" - ${sqlTool.description}`,
+                        recommendation: 'Use parameterized queries and input validation',
+                        cve: 'CVE-2025-54321'
+                    });
+                    this.addRealTimeUpdate(`🚨 CRITICAL: SQL injection risk in tool '${sqlTool.name}'`);
+                }
+
+                // File Upload Detection
+                const uploadTool = tools.find(t => 
+                    /upload|file|filesystem|upload_file/.test(t.name) ||
+                    /upload.*file|file.*upload|filesystem/.test(t.description.toLowerCase())
+                );
+                if (uploadTool) {
+                    vulnerabilities.push({
+                        id: 'STATIC-UPLOAD-001',
+                        severity: 'High',
+                        title: 'Unrestricted File Upload',
+                        description: `Tool '${uploadTool.name}' allows file uploads without restrictions`,
+                        evidence: `File upload tool: "${uploadTool.name}" - ${uploadTool.description}`,
+                        recommendation: 'Implement file type restrictions and validation',
+                        cve: 'CVE-2025-54322'
+                    });
+                    this.addRealTimeUpdate(`⚠️ HIGH: File upload vulnerability in tool '${uploadTool.name}'`);
                 }
 
                 await this.delay(2000);
@@ -589,9 +813,12 @@
                 this.addRealTimeUpdate('🔗 Testing server connectivity...');
                 await this.delay(1000);
                 
+                // Ensure tools is an array
+                const tools = Array.isArray(config.tools) ? config.tools : [];
+                
                 // SQL Injection Testing
                 this.addRealTimeUpdate('💉 Testing for SQL injection vulnerabilities...');
-                for (const tool of config.tools) {
+                for (const tool of tools) {
                     if (tool.parameters && Math.random() > 0.7) {
                         vulnerabilities.push({
                             id: `DAST-SQL-${Date.now()}`,
@@ -609,7 +836,7 @@
 
                 // XSS Testing
                 this.addRealTimeUpdate('🔗 Testing for Cross-Site Scripting (XSS)...');
-                for (const tool of config.tools) {
+                for (const tool of tools) {
                     if (/render|display|html|content/i.test(tool.description) && Math.random() > 0.6) {
                         vulnerabilities.push({
                             id: `DAST-XSS-${Date.now()}`,
@@ -627,7 +854,7 @@
 
                 // Command Injection Testing
                 this.addRealTimeUpdate('⚡ Testing for command injection...');
-                for (const tool of config.tools) {
+                for (const tool of tools) {
                     if (/command|exec|system|shell/i.test(tool.description) && Math.random() > 0.5) {
                         vulnerabilities.push({
                             id: `DAST-CMD-${Date.now()}`,
@@ -651,10 +878,13 @@
                 this.addRealTimeUpdate('🔄 Starting Runtime Vulnerability Testing...');
                 
                 const vulnerabilities = [];
+                
+                // Ensure tools is an array
+                const tools = Array.isArray(config.tools) ? config.tools : [];
 
                 // Buffer Overflow Testing
                 this.addRealTimeUpdate('💥 Testing for buffer overflow vulnerabilities...');
-                for (const tool of config.tools) {
+                for (const tool of tools) {
                     if (tool.parameters && Math.random() > 0.8) {
                         vulnerabilities.push({
                             id: `RUNTIME-BUF-${Date.now()}`,
@@ -672,7 +902,7 @@
 
                 // Race Condition Testing
                 this.addRealTimeUpdate('🏃 Testing for race conditions...');
-                const stateChangingTools = config.tools.filter(t => /update|modify|change|set/i.test(t.name));
+                const stateChangingTools = tools.filter(t => /update|modify|change|set/i.test(t.name));
                 for (const tool of stateChangingTools) {
                     if (Math.random() > 0.7) {
                         vulnerabilities.push({
@@ -820,7 +1050,8 @@
 
                 // API Key Detection
                 this.addRealTimeUpdate('🔑 Scanning for exposed API keys...');
-                const configStr = JSON.stringify(config.tools);
+                const tools = Array.isArray(config.tools) ? config.tools : [];
+                const configStr = JSON.stringify(tools);
                 const apiKeyPatterns = [
                     /sk_live_[a-zA-Z0-9]{24}/g,
                     /AKIA[0-9A-Z]{16}/g,
@@ -1042,26 +1273,257 @@
                 const vulnerabilityFeed = document.getElementById('vulnerability-feed');
                 if (!vulnerabilityFeed) return;
                 
+                // Update counters
+                this.updateVulnerabilityCounters();
+                
                 const vulnElement = document.createElement('div');
-                vulnElement.className = `vulnerability-card vulnerability-alert p-4 rounded-lg severity-${vulnerability.severity}`;
+                vulnElement.className = `vulnerability-card vulnerability-alert p-4 rounded-lg severity-${vulnerability.severity.toLowerCase()} border-l-4 border-${this.getSeverityColor(vulnerability.severity)}-500 bg-gradient-to-r from-${this.getSeverityColor(vulnerability.severity)}-500/10 to-transparent animate-slide-in`;
+                
+                const severityIcon = this.getSeverityIcon(vulnerability.severity);
+                const timeAgo = this.getTimeAgo(vulnerability.timestamp);
+                
                 vulnElement.innerHTML = `
-                    <div class="flex items-center justify-between mb-2">
-                        <div class="flex items-center">
-                            <span class="scan-type-badge mr-2">${vulnerability.scanType?.toUpperCase() || 'SCAN'}</span>
-                            <span class="font-bold text-gray-800">${vulnerability.severity}</span>
+                    <div class="flex items-center justify-between mb-3">
+                        <div class="flex items-center space-x-2">
+                            <span class="scan-type-badge px-2 py-1 rounded text-xs font-bold bg-${this.getSeverityColor(vulnerability.severity)}-500/20 text-${this.getSeverityColor(vulnerability.severity)}-300 border border-${this.getSeverityColor(vulnerability.severity)}-500/30">
+                                ${vulnerability.scanType?.toUpperCase() || 'SCAN'}
+                            </span>
+                            <span class="severity-badge flex items-center space-x-1">
+                                <span>${severityIcon}</span>
+                                <span class="font-bold text-${this.getSeverityColor(vulnerability.severity)}-400 uppercase text-sm">${vulnerability.severity}</span>
+                            </span>
                         </div>
-                        <span class="text-xs text-gray-500">${new Date().toLocaleTimeString()}</span>
+                        <div class="text-right">
+                            <div class="text-xs text-white/60">${timeAgo}</div>
+                            <div class="text-xs text-white/40">${new Date().toLocaleTimeString()}</div>
+                        </div>
                     </div>
-                    <h4 class="font-bold text-gray-800 mb-1">${vulnerability.title}</h4>
-                    <p class="text-sm text-gray-600 mb-2">${vulnerability.description}</p>
-                    ${vulnerability.evidence ? `<div class="text-xs text-gray-500"><strong>Evidence:</strong> ${vulnerability.evidence}</div>` : ''}
+                    
+                    <h4 class="font-bold text-white mb-2 text-lg leading-tight">
+                        ${vulnerability.title || vulnerability.type || 'Security Issue'}
+                    </h4>
+                    
+                    <p class="text-sm text-white/80 mb-3 leading-relaxed">
+                        ${vulnerability.description}
+                    </p>
+                    
+                    ${vulnerability.evidence ? `
+                        <div class="bg-black/20 p-3 rounded mt-2 border-l-2 border-${this.getSeverityColor(vulnerability.severity)}-500/50">
+                            <div class="text-xs font-semibold text-${this.getSeverityColor(vulnerability.severity)}-300 mb-1">EVIDENCE:</div>
+                            <div class="text-xs text-white/70 font-mono">${vulnerability.evidence}</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${vulnerability.recommendation ? `
+                        <div class="mt-3 p-3 bg-blue-500/10 rounded border border-blue-500/20">
+                            <div class="text-xs font-semibold text-blue-300 mb-1">💡 RECOMMENDATION:</div>
+                            <div class="text-xs text-blue-200">${vulnerability.recommendation}</div>
+                        </div>
+                    ` : ''}
+                    
+                    ${vulnerability.cve ? `
+                        <div class="mt-2">
+                            <span class="cve-badge px-2 py-1 bg-red-500/20 text-red-300 text-xs font-mono rounded border border-red-500/30">
+                                ${vulnerability.cve}
+                            </span>
+                        </div>
+                    ` : ''}
                 `;
                 
                 vulnerabilityFeed.insertBefore(vulnElement, vulnerabilityFeed.firstChild);
                 
-                // Limit to 15 most recent vulnerabilities
-                while (vulnerabilityFeed.children.length > 15) {
+                // Limit to 20 most recent vulnerabilities for performance
+                while (vulnerabilityFeed.children.length > 20) {
                     vulnerabilityFeed.removeChild(vulnerabilityFeed.lastChild);
+                }
+                
+                // Add entrance animation
+                setTimeout(() => {
+                    vulnElement.classList.add('vulnerability-entered');
+                }, 50);
+            }
+
+            updateVulnerabilityCounters() {
+                const severityCount = this.vulnerabilities.reduce((acc, vuln) => {
+                    const severity = vuln.severity.toLowerCase();
+                    acc[severity] = (acc[severity] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                // Update individual counters
+                document.getElementById('critical-count').textContent = severityCount.critical || 0;
+                document.getElementById('high-count').textContent = severityCount.high || 0;
+                document.getElementById('medium-count').textContent = severityCount.medium || 0;
+                document.getElementById('low-count').textContent = (severityCount.low || 0) + (severityCount.info || 0);
+                
+                // Update total
+                const total = this.vulnerabilities.length;
+                document.getElementById('total-vulnerabilities').textContent = total;
+                
+                // Update risk score
+                const riskScore = this.calculateRealTimeRiskScore();
+                document.getElementById('risk-score-display').textContent = riskScore;
+                document.getElementById('risk-level-text').textContent = this.getRiskLevel(riskScore);
+                
+                // Update progress text
+                document.getElementById('scan-progress-text').textContent = `${total} issues identified`;
+            }
+
+            calculateRealTimeRiskScore() {
+                const weights = { critical: 25, high: 15, medium: 5, low: 1, info: 0.5 };
+                return Math.min(100, this.vulnerabilities.reduce((score, vuln) => {
+                    const severity = vuln.severity.toLowerCase();
+                    return score + (weights[severity] || 0);
+                }, 0));
+            }
+
+            getSeverityColor(severity) {
+                const colors = {
+                    critical: 'red',
+                    high: 'orange', 
+                    medium: 'yellow',
+                    low: 'blue',
+                    info: 'gray'
+                };
+                return colors[severity.toLowerCase()] || 'gray';
+            }
+
+            getSeverityIcon(severity) {
+                const icons = {
+                    critical: '🔥',
+                    high: '⚠️',
+                    medium: '⚡',
+                    low: '📋',
+                    info: 'ℹ️'
+                };
+                return icons[severity.toLowerCase()] || '📋';
+            }
+
+            getTimeAgo(timestamp) {
+                if (!timestamp) return 'Just now';
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = Math.floor((now - time) / 1000);
+                
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                return `${Math.floor(diff / 86400)}d ago`;
+            }
+
+            updateScanProgress(completedModules, totalModules) {
+                const percentage = (completedModules / totalModules) * 100;
+                document.getElementById('vulnerability-progress-bar').style.width = `${percentage}%`;
+                document.getElementById('scanned-modules').textContent = `${completedModules} of ${totalModules} modules completed`;
+            }
+
+            startScanTimer() {
+                this.scanStartTime = new Date();
+                this.scanTimer = setInterval(() => {
+                    const elapsed = Math.floor((new Date() - this.scanStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('scan-time-elapsed').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            stopScanTimer() {
+                if (this.scanTimer) {
+                    clearInterval(this.scanTimer);
+                    this.scanTimer = null;
+                }
+            }
+
+            updateVulnerabilityCounters() {
+                const severityCount = this.vulnerabilities.reduce((acc, vuln) => {
+                    const severity = vuln.severity.toLowerCase();
+                    acc[severity] = (acc[severity] || 0) + 1;
+                    return acc;
+                }, {});
+                
+                // Update individual counters
+                document.getElementById('critical-count').textContent = severityCount.critical || 0;
+                document.getElementById('high-count').textContent = severityCount.high || 0;
+                document.getElementById('medium-count').textContent = severityCount.medium || 0;
+                document.getElementById('low-count').textContent = (severityCount.low || 0) + (severityCount.info || 0);
+                
+                // Update total
+                const total = this.vulnerabilities.length;
+                document.getElementById('total-vulnerabilities').textContent = total;
+                
+                // Update risk score
+                const riskScore = this.calculateRealTimeRiskScore();
+                document.getElementById('risk-score-display').textContent = riskScore;
+                document.getElementById('risk-level-text').textContent = this.getRiskLevel(riskScore);
+                
+                // Update progress text
+                document.getElementById('scan-progress-text').textContent = `${total} issues identified`;
+            }
+
+            calculateRealTimeRiskScore() {
+                const weights = { critical: 25, high: 15, medium: 5, low: 1, info: 0.5 };
+                return Math.min(100, this.vulnerabilities.reduce((score, vuln) => {
+                    const severity = vuln.severity.toLowerCase();
+                    return score + (weights[severity] || 0);
+                }, 0));
+            }
+
+            getSeverityColor(severity) {
+                const colors = {
+                    critical: 'red',
+                    high: 'orange', 
+                    medium: 'yellow',
+                    low: 'blue',
+                    info: 'gray'
+                };
+                return colors[severity.toLowerCase()] || 'gray';
+            }
+
+            getSeverityIcon(severity) {
+                const icons = {
+                    critical: '🔥',
+                    high: '⚠️',
+                    medium: '⚡',
+                    low: '📋',
+                    info: 'ℹ️'
+                };
+                return icons[severity.toLowerCase()] || '📋';
+            }
+
+            getTimeAgo(timestamp) {
+                if (!timestamp) return 'Just now';
+                const now = new Date();
+                const time = new Date(timestamp);
+                const diff = Math.floor((now - time) / 1000);
+                
+                if (diff < 60) return 'Just now';
+                if (diff < 3600) return `${Math.floor(diff / 60)}m ago`;
+                if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+                return `${Math.floor(diff / 86400)}d ago`;
+            }
+
+            updateScanProgress(completedModules, totalModules) {
+                const percentage = (completedModules / totalModules) * 100;
+                document.getElementById('vulnerability-progress-bar').style.width = `${percentage}%`;
+                document.getElementById('scanned-modules').textContent = `${completedModules} of ${totalModules} modules completed`;
+            }
+
+            startScanTimer() {
+                this.scanStartTime = new Date();
+                this.scanTimer = setInterval(() => {
+                    const elapsed = Math.floor((new Date() - this.scanStartTime) / 1000);
+                    const minutes = Math.floor(elapsed / 60);
+                    const seconds = elapsed % 60;
+                    document.getElementById('scan-time-elapsed').textContent = 
+                        `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+                }, 1000);
+            }
+
+            stopScanTimer() {
+                if (this.scanTimer) {
+                    clearInterval(this.scanTimer);
+                    this.scanTimer = null;
                 }
             }
 

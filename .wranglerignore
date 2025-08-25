@@ -5,5 +5,3 @@ node_modules
 wrangler.toml
 .wranglerignore
 live_server.js
-server.js
-start.js

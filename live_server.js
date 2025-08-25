@@ -38,6 +38,30 @@ const server = http.createServer((req, res) => {
             filePath = '/enterprise_security_hub.html';
         }
         
+        // Health check endpoint for DAST scanner
+        if (filePath === '/health') {
+            res.writeHead(200, { 
+                'Content-Type': 'application/json',
+                'Access-Control-Allow-Origin': '*',
+                'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+                'Access-Control-Allow-Headers': 'Content-Type, User-Agent'
+            });
+            res.end(JSON.stringify({ 
+                status: 'healthy', 
+                service: 'MCP Guardian Enterprise Platform',
+                timestamp: new Date().toISOString(),
+                version: '2.0.0'
+            }));
+            return;
+        }
+        
+        // Handle favicon.ico request silently
+        if (filePath === '/favicon.ico') {
+            res.writeHead(204, { 'Content-Type': 'image/x-icon' });
+            res.end();
+            return;
+        }
+        
         // Remove leading slash and resolve full path
         const fullPath = path.join(__dirname, filePath.substring(1));
         

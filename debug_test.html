@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Test - MCP Scanner</title>
+</head>
+<body>
+    <h1>Debug Test</h1>
+    <div id="output"></div>
+
+    <script src="./runtime_security_scanner.js"></script>
+    <script src="./network_security_scanner.js"></script>
+    <script src="./application_logic_scanner.js"></script>
+    <script src="./dast_scanner.js"></script>
+    <script src="./sca_scanner.js"></script>
+    <script src="./secret_scanner.js"></script>
+    <script src="./iac_scanner.js"></script>
+    <script src="./naptha_agent_coordinator.js"></script>
+    <script src="./ai_powered_analytics.js"></script>
+    <script src="./threat_intelligence_engine.js"></script>
+    <script src="./compliance_orchestrator.js"></script>
+    <script src="./autonomous_remediation.js"></script>
+    <script src="./comprehensive_security_scanner.js"></script>
+    <script>
+        async function testScanner() {
+            const output = document.getElementById('output');
+            
+            try {
+                output.innerHTML += '<p>Loading ComprehensiveSecurityScanner...</p>';
+                
+                if (typeof ComprehensiveSecurityScanner === 'undefined') {
+                    output.innerHTML += '<p style="color: red;">❌ ComprehensiveSecurityScanner not loaded!</p>';
+                    return;
+                }
+                
+                output.innerHTML += '<p style="color: green;">✅ ComprehensiveSecurityScanner loaded successfully</p>';
+                
+                const scanner = new ComprehensiveSecurityScanner({
+                    napthaIntegration: false,
+                    aiAnalytics: false,
+                    autonomousRemediation: false,
+                    threatIntelligence: false
+                });
+                
+                const testConfig = {
+                    serverName: "Test Server",
+                    serverUrl: "https://dangerous-mcp-server.example.com:8080",
+                    tools: [
+                        {
+                            "name": "run_sql_query",
+                            "description": "Execute SQL queries directly on the database",
+                            "parameters": {
+                                "query": "string",
+                                "database": "string"
+                            }
+                        },
+                        {
+                            "name": "exec_script",
+                            "description": "Execute shell scripts and commands",
+                            "parameters": {
+                                "script": "string",
+                                "environment": "string"
+                            }
+                        }
+                    ],
+                    oauthScopes: ["admin:org", "repo:write", "user:write", "delete:packages"]
+                };
+                
+                output.innerHTML += '<p>Starting scan...</p>';
+                const results = await scanner.performCompleteScan(testConfig);
+                
+                output.innerHTML += `<p style="color: green;">✅ Scan completed!</p>`;
+                output.innerHTML += `<p>Total vulnerabilities: ${results.vulnerabilities?.length || 0}</p>`;
+                output.innerHTML += `<pre>${JSON.stringify(results, null, 2)}</pre>`;
+                
+            } catch (error) {
+                output.innerHTML += `<p style="color: red;">❌ Error: ${error.message}</p>`;
+                console.error('Test failed:', error);
+            }
+        }
+        
+        testScanner();
+    </script>
+</body>
+</html>

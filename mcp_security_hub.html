@@ -176,12 +176,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return tool ? "Tool description mentions auto-updating or version drift, which could lead to a 'rug-pull' attack where functionality changes maliciously." : null;
         }},
         { id: 'CVE-2025-53818', severity: 'Critical', title: 'Command Injection via child_process', check: (tools) => {
-            const tool = tools.find(t => /child_process|exec|execSync/i.test(t.description));
-            return tool ? "Tool description explicitly mentions 'child_process' or 'exec', indicating a high risk of command injection." : null;
+            const tool = tools.find(t => /child_process|exec|execSync|exec_script|run_script|shell/i.test((t.description||'') + ' ' + (t.name||'')));
+            return tool ? "Tool mentions exec/child_process or arbitrary script execution, indicating a high risk of command injection (RCE)." : null;
         }},
         { id: 'CVE-2025-53355', severity: 'High', title: 'SSRF via Unvalidated URL parameters', check: (tools) => {
-            const tool = tools.find(t => t.parameters && t.parameters.url && /fetch|request|http/i.test(t.description));
-            return tool ? `Tool '${tool.name}' accepts a URL parameter, creating a potential Server-Side Request Forgery (SSRF) risk.` : null;
+            const tool = tools.find(t => t.parameters && (t.parameters.url || t.parameters.targetUrl) && /fetch|request|http|url/i.test(((t.description)||'') + ' ' + (t.name||'')));
+            return tool ? `Tool '${tool.name}' accepts a URL-like parameter (url/targetUrl) without sanitization, creating SSRF risk.` : null;
         }},
         { id: 'CVE-2025-53109', severity: 'High', title: 'Symlink Escape / Path Traversal', check: (tools) => {
             const tool = tools.find(t => t.parameters && (t.parameters.file || t.parameters.path) && /read|write|access|load/i.test(t.description));
@@ -198,8 +198,8 @@ document.addEventListener('DOMContentLoaded', () => {
             return tool ? `Tool '${tool.name}' suggests direct code execution capabilities.` : null;
         }},
         { id: 'GEN-SQLi', severity: 'Critical', title: 'SQL Injection', check: (tools) => {
-            const tool = tools.find(t => /database|sql|query/i.test(t.description) && !/parameterized|prepared/i.test(t.description));
-            return tool ? `Tool '${tool.name}' interacts with a database without mentioning parameterized queries, risking SQLi.` : null;
+            const tool = tools.find(t => /database|sql|query|sqlite|run_sql_query/i.test(((t.description)||'') + ' ' + (t.name||'')) && !/parameterized|prepared/i.test((t.description||'')));
+            return tool ? `Tool '${tool.name}' executes or builds raw SQL without clear parameterization, risking SQL injection.` : null;
         }},
         { id: 'GEN-XSS', severity: 'High', title: 'Cross-Site Scripting (XSS)', check: (tools) => {
             const tool = tools.find(t => /html|render|display_content/i.test(t.name));
@@ -210,7 +210,7 @@ document.addEventListener('DOMContentLoaded', () => {
             return tool ? `Tool '${tool.name}' uses direct object IDs as parameters, which could lead to IDOR if access controls are not checked.` : null;
         }},
         { id: 'GEN-FileUpload', severity: 'High', title: 'Unrestricted File Upload', check: (tools) => {
-            const tool = tools.find(t => /upload|save_file/i.test(t.name));
+            const tool = tools.find(t => /upload|save_file|upload_file/i.test((t.name||'')));
             return tool ? `Tool '${tool.name}' allows file uploads, which is risky if file types and content are not strictly validated.` : null;
         }},
         { id: 'GEN-XXE', severity: 'High', title: 'XML External Entity (XXE)', check: (tools) => {
@@ -539,7 +539,7 @@ document.addEventListener('DOMContentLoaded', () => {
         analyzeBtn.innerHTML = '<div class="loader mx-auto"></div> Running Comprehensive Scan...';
         analyzeBtn.disabled = true;
 
-        const config = {
+    const config = {
             serverName: document.getElementById('server-name').value,
             toolsJson: document.getElementById('tools-json').value,
             oauthToken: document.getElementById('oauth-token').value,
@@ -549,10 +549,12 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             // Parse tools for comprehensive scanner
             const tools = JSON.parse(config.toolsJson);
+            const oauthScopes = (config.oauthToken || '').split(/\s+/).filter(Boolean);
             const serverConfig = {
                 serverName: config.serverName,
-                tools: tools,
-                serverUrl: config.serverUrl
+                tools,
+                serverUrl: config.serverUrl,
+                oauthScopes
             };
             
             // Run static analysis first
@@ -560,7 +562,7 @@ document.addEventListener('DOMContentLoaded', () => {
             
             // Run comprehensive scan (runtime, network, application logic)
             const comprehensiveScanner = new ComprehensiveSecurityScanner(serverConfig);
-            const comprehensiveReport = await comprehensiveScanner.performCompleteScan();
+            const comprehensiveReport = await comprehensiveScanner.performCompleteScan(serverConfig);
             
             // Combine static and dynamic findings
             const allFindings = [...staticFindings, ...comprehensiveReport.vulnerabilities];

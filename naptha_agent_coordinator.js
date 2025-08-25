@@ -527,6 +527,198 @@ class NapthaAgentCoordinator {
         
         console.log('✅ Naptha AI Agent Coordinator shutdown complete');
     }
+
+    /**
+     * Initialize method expected by comprehensive scanner
+     */
+    async initialize() {
+        console.log('🤖 Naptha AI Coordinator initialized');
+        // Agent pool is already initialized in constructor
+        return true;
+    }
+
+    /**
+     * Perform AI correlation on scan results
+     */
+    async performAICorrelation(scanId, scanResults) {
+        console.log(`🧠 Performing AI correlation for scan: ${scanId}`);
+        
+        // Aggregate all vulnerabilities from scan results
+        const allFindings = [];
+        for (const [scanType, result] of Object.entries(scanResults)) {
+            if (result?.vulnerabilities && Array.isArray(result.vulnerabilities)) {
+                allFindings.push(...result.vulnerabilities.map(vuln => ({
+                    ...vuln,
+                    scanSource: scanType
+                })));
+            }
+        }
+        
+        // Apply AI correlation to findings
+        const correlatedFindings = await this.applyAICorrelation(allFindings);
+        
+        // Store results for retrieval
+        this.lastAnalysis = {
+            scanId,
+            timestamp: new Date().toISOString(),
+            totalFindings: allFindings.length,
+            correlatedFindings: correlatedFindings.length,
+            findings: correlatedFindings,
+            aiInsights: {
+                riskVector: this.calculateRiskVector(correlatedFindings),
+                threatLandscape: this.analyzeThreatLandscape(correlatedFindings),
+                remediationPriority: this.calculateRemediationPriority(correlatedFindings)
+            }
+        };
+        
+        console.log(`✅ AI correlation complete: ${correlatedFindings.length} correlated findings`);
+    }
+
+    /**
+     * Get AI analysis results
+     */
+    getAIAnalysis() {
+        return this.lastAnalysis || {
+            scanId: 'no-scan-performed',
+            timestamp: new Date().toISOString(),
+            totalFindings: 0,
+            correlatedFindings: 0,
+            findings: [],
+            aiInsights: {
+                riskVector: { overall: 'low' },
+                threatLandscape: { threats: [] },
+                remediationPriority: { actions: [] }
+            }
+        };
+    }
+
+    /**
+     * Get current status of Naptha AI system
+     */
+    getStatus() {
+        const activeAgentCount = Array.from(this.agents.values()).filter(agent => agent.status === 'active').length;
+        const totalAgentCount = this.agents.size;
+        
+        return {
+            initialized: true,
+            activeAgents: activeAgentCount,
+            totalAgents: totalAgentCount,
+            totalScans: this.activeScans.size,
+            totalVulnerabilities: this.lastAnalysis?.totalFindings || 0,
+            queuedRemediations: this.remediationQueue.length,
+            lastScanId: this.lastAnalysis?.scanId || null,
+            systemHealth: 'operational',
+            aiCapabilities: {
+                correlation: true,
+                threatIntel: true,
+                remediation: true,
+                compliance: true
+            }
+        };
+    }
+
+    /**
+     * Calculate risk vector from findings
+     */
+    calculateRiskVector(findings) {
+        const severityMap = { critical: 4, high: 3, medium: 2, low: 1, info: 0.5 };
+        const totalRisk = findings.reduce((sum, finding) => {
+            return sum + (severityMap[finding.severity?.toLowerCase()] || 1);
+        }, 0);
+        
+        return {
+            overall: totalRisk > 10 ? 'critical' : totalRisk > 5 ? 'high' : totalRisk > 2 ? 'medium' : 'low',
+            score: Math.min(10, totalRisk),
+            categories: {
+                confidentiality: findings.filter(f => f.type?.toLowerCase().includes('disclosure')).length > 0 ? 'high' : 'low',
+                integrity: findings.filter(f => f.type?.toLowerCase().includes('injection')).length > 0 ? 'high' : 'low',
+                availability: findings.filter(f => f.type?.toLowerCase().includes('denial')).length > 0 ? 'high' : 'low'
+            }
+        };
+    }
+
+    /**
+     * Analyze threat landscape
+     */
+    analyzeThreatLandscape(findings) {
+        const threatTypes = findings.reduce((types, finding) => {
+            const category = this.categorizeVulnerability(finding.type);
+            types[category] = (types[category] || 0) + 1;
+            return types;
+        }, {});
+        
+        return {
+            threats: Object.entries(threatTypes).map(([type, count]) => ({ type, count })),
+            primaryThreats: Object.entries(threatTypes)
+                .sort(([,a], [,b]) => b - a)
+                .slice(0, 3)
+                .map(([type]) => type),
+            riskDistribution: threatTypes
+        };
+    }
+
+    /**
+     * Calculate remediation priority
+     */
+    calculateRemediationPriority(findings) {
+        const prioritized = findings
+            .sort((a, b) => {
+                const severityOrder = { critical: 4, high: 3, medium: 2, low: 1, info: 0 };
+                return (severityOrder[b.severity?.toLowerCase()] || 0) - (severityOrder[a.severity?.toLowerCase()] || 0);
+            })
+            .slice(0, 10); // Top 10 priority items
+        
+        return {
+            actions: prioritized.map((finding, index) => ({
+                priority: index + 1,
+                finding: finding.id,
+                severity: finding.severity,
+                type: finding.type,
+                estimatedEffort: this.estimateRemediationEffort(finding),
+                riskReduction: this.calculateRiskReduction(finding)
+            }))
+        };
+    }
+
+    /**
+     * Categorize vulnerability type
+     */
+    categorizeVulnerability(type) {
+        const lowerType = (type || '').toLowerCase();
+        if (lowerType.includes('injection') || lowerType.includes('rce')) return 'code-execution';
+        if (lowerType.includes('disclosure') || lowerType.includes('exposure')) return 'information-disclosure';
+        if (lowerType.includes('privilege') || lowerType.includes('authorization')) return 'privilege-escalation';
+        if (lowerType.includes('transport') || lowerType.includes('tls')) return 'transport-security';
+        return 'other';
+    }
+
+    /**
+     * Estimate remediation effort
+     */
+    estimateRemediationEffort(finding) {
+        const effortMap = {
+            'critical': 'high',
+            'high': 'medium',
+            'medium': 'medium',
+            'low': 'low',
+            'info': 'low'
+        };
+        return effortMap[finding.severity?.toLowerCase()] || 'medium';
+    }
+
+    /**
+     * Calculate risk reduction impact
+     */
+    calculateRiskReduction(finding) {
+        const impactMap = {
+            'critical': 4,
+            'high': 3,
+            'medium': 2,
+            'low': 1,
+            'info': 0.5
+        };
+        return impactMap[finding.severity?.toLowerCase()] || 1;
+    }
 }
 
 // Export for use in other modules
